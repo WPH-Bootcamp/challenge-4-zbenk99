@@ -1,0 +1,7 @@
+id,name,class,average,status,subjects
+"001","Bambang Ganteng","1A",86.67,"Lulus","Matematika:100;IPA:90;IPS:70"
+"002","Dayu Cantik","1A",50.00,"Tidak Lulus","Matematika:50"
+"003","Thomas","1A",60.00,"Tidak Lulus","Matematika:60"
+"004","Anton","1A",90.00,"Lulus","Matematika:90"
+"005","Maman","1B",0.00,"Tidak Lulus",""
+"007","Surya","1B",0.00,"Tidak Lulus",""
