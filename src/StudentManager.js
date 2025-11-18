@@ -13,13 +13,44 @@
  * - Method displayAllStudents() untuk menampilkan semua siswa
  */
 
+import fs from 'fs';
+import path from 'path';
+import Student from './Student.js';
+
 class StudentManager {
   // TODO: Implementasikan constructor
   // Properti yang dibutuhkan:
   // - students: Array untuk menyimpan semua siswa
   
-  constructor() {
+  constructor(dataFile = 'students.json') {
     // Implementasi constructor di sini
+    this.students = [];
+    this.dataFilePath = path.resolve(dataFile);
+    this.loadFromFile();
+  }
+
+  // persistence helpers
+  saveToFile() {
+    try {
+      const arr = this.students.map(s => s.toJSON());
+      fs.writeFileSync(this.dataFilePath, JSON.stringify(arr, null, 2), 'utf8');
+    } catch (err) {
+      console.error('Gagal menyimpan data:', err.message);
+    }
+  }
+
+  loadFromFile() {
+    try {
+      if (!fs.existsSync(this.dataFilePath)) {
+        fs.writeFileSync(this.dataFilePath, '[]', 'utf8');
+      }
+      const raw = fs.readFileSync(this.dataFilePath, 'utf8');
+      const arr = JSON.parse(raw || '[]');
+      this.students = arr.map(obj => Student.fromJSON(obj));
+    } catch (err) {
+      console.error('Gagal memuat data:', err.message);
+      this.students = [];
+    }
   }
 
   /**
@@ -30,6 +61,11 @@ class StudentManager {
    */
   addStudent(student) {
     // Implementasi method di sini
+    const exists = this.students.some(s => s.id === student.id);
+    if (exists) return false;
+    this.students.push(student);
+    this.saveToFile();
+    return true;
   }
 
   /**
@@ -40,6 +76,11 @@ class StudentManager {
    */
   removeStudent(id) {
     // Implementasi method di sini
+    const idx = this.students.findIndex(s => s.id === String(id));
+    if (idx === -1) return false;
+    this.students.splice(idx, 1);
+    this.saveToFile();
+    return true;
   }
 
   /**
@@ -50,6 +91,7 @@ class StudentManager {
    */
   findStudent(id) {
     // Implementasi method di sini
+    return this.students.find(s => s.id === String(id)) || null;
   }
 
   /**
@@ -61,6 +103,19 @@ class StudentManager {
    */
   updateStudent(id, data) {
     // Implementasi method di sini
+    const s = this.findStudent(id);
+    if (!s) return false;
+    if (data.name !== undefined && String(data.name).trim() !== '') s.name = String(data.name).trim();
+    if (data.class !== undefined && String(data.class).trim() !== '') s.class = String(data.class).trim();
+    if (data.grades && typeof data.grades === 'object') {
+      // replace grades
+      s.grades = {};
+      for (const [sub, score] of Object.entries(data.grades)) {
+        s.addGrade(sub, score);
+      }
+    }
+    this.saveToFile();
+    return true;
   }
 
   /**
@@ -69,6 +124,7 @@ class StudentManager {
    */
   getAllStudents() {
     // Implementasi method di sini
+    return [...this.students];
   }
 
   /**
@@ -79,6 +135,7 @@ class StudentManager {
    */
   getTopStudents(n) {
     // Implementasi method di sini
+    return [...this.students].sort((a,b) => b.getAverage() - a.getAverage()).slice(0, n);
   }
 
   /**
@@ -87,6 +144,14 @@ class StudentManager {
    */
   displayAllStudents() {
     // Implementasi method di sini
+    if (this.students.length === 0) {
+      console.log('Belum ada siswa terdaftar.');
+      return;
+    }
+    this.students.forEach(s => {
+      s.displayInfo();
+      console.log('------------------------');
+    });
   }
 
   /**
@@ -96,6 +161,7 @@ class StudentManager {
    */
   getStudentsByClass(className) {
     // Implementasi method di sini (BONUS)
+    return this.students.filter(s => s.class === className);
   }
 
   /**
@@ -105,6 +171,51 @@ class StudentManager {
    */
   getClassStatistics(className) {
     // Implementasi method di sini (BONUS)
+    const list = this.getStudentsByClass(className);
+    if (list.length === 0) {
+      return {
+        className,
+        totalStudents: 0,
+        averageClassScore: 0,
+        passCount: 0,
+        failCount: 0
+      };
+    }
+    const totalAvg = list.reduce((acc, s) => acc + s.getAverage(), 0);
+    const passCount = list.filter(s => s.getAverage() >= 75).length;
+    return {
+      className,
+      totalStudents: list.length,
+      averageClassScore: totalAvg / list.length,
+      passCount,
+      failCount: list.length - passCount
+    };
+  }
+
+  /**
+   * Export report to files (JSON and CSV)
+   * @param {string} outPrefix - prefix nama file (without ext)
+   */
+  exportReport(outPrefix = 'report') {
+    const jsonOut = `${outPrefix}.json`;
+    const csvOut = `${outPrefix}.csv`;
+    try {
+      const arr = this.students.map(s => s.toJSON());
+      fs.writeFileSync(jsonOut, JSON.stringify(arr, null, 2), 'utf8');
+
+      // CSV: id,name,class,avg,status,subjects (semi-colon separated subject:score)
+      const lines = [];
+      lines.push('id,name,class,average,status,subjects');
+      for (const s of this.students) {
+        const subj = Object.entries(s.grades).map(([k,v]) => `${k}:${v}`).join(';');
+        lines.push(`"${s.id}","${s.name}","${s.class}",${s.getAverage().toFixed(2)},"${s.getGradeStatus()}","${subj}"`);
+      }
+      fs.writeFileSync(csvOut, lines.join('\n'), 'utf8');
+
+      return { jsonOut, csvOut };
+    } catch (err) {
+      throw new Error('Gagal export report: ' + err.message);
+    }
   }
 }
 
