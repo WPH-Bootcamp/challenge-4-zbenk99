@@ -1,0 +1,48 @@
+[
+  {
+    "id": "001",
+    "name": "Bambang Ganteng",
+    "class": "1A",
+    "grades": {
+      "Matematika": 100,
+      "IPA": 90,
+      "IPS": 70
+    }
+  },
+  {
+    "id": "002",
+    "name": "Dayu Cantik",
+    "class": "1A",
+    "grades": {
+      "Matematika": 50
+    }
+  },
+  {
+    "id": "003",
+    "name": "Thomas",
+    "class": "1A",
+    "grades": {
+      "Matematika": 60
+    }
+  },
+  {
+    "id": "004",
+    "name": "Anton",
+    "class": "1A",
+    "grades": {
+      "Matematika": 90
+    }
+  },
+  {
+    "id": "005",
+    "name": "Maman",
+    "class": "1B",
+    "grades": {}
+  },
+  {
+    "id": "007",
+    "name": "Surya",
+    "class": "1B",
+    "grades": {}
+  }
+]
